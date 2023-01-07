@@ -1,0 +1,45 @@
+FROM --platform=linux/amd64 ubuntu:22.04 AS builder
+
+RUN apt-get update && \
+    apt-get install -y curl && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN useradd -ms /bin/bash main
+
+USER main
+
+WORKDIR /home/main
+
+RUN curl -fSL -o envoy https://github.com/envoyproxy/envoy/releases/download/v1.24.1/envoy-1.24.1-linux-x86_64 && \
+    chmod +x ./envoy
+
+COPY envoy.config.json envoy.config.json
+
+RUN mkdir logs && \
+    ./envoy --mode validate --config-path ./envoy.config.json
+
+# ------
+
+FROM --platform=linux/amd64 ubuntu:22.04
+
+ENV NETZ_SERVICE={{.Name}}
+
+RUN apt-get update && \
+    apt-get install -y dnsutils && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN useradd -ms /bin/bash main
+
+USER main
+
+WORKDIR /home/main
+
+RUN mkdir logs
+
+COPY --from=builder /home/main/envoy envoy
+
+COPY --from=builder /home/main/envoy.config.json envoy.config.json
+
+ENTRYPOINT ["./envoy"]
+
+CMD ["--config-path", "envoy.config.json"]
