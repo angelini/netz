@@ -35,8 +35,8 @@ func writeEnvoyConfig(path string, config *bootstrap.Bootstrap) error {
 }
 
 func BuildLocal(log *zap.Logger, root *config.Root, name string, distDir string) error {
-	dir := filepath.Join(distDir, fmt.Sprintf("%s-local", name))
-	log.Info("building service files", zap.String("name", name), zap.String("dir", dir))
+	dir := filepath.Join(distDir, fmt.Sprintf("%s-local-proxy", name))
+	log.Info("building local service proxy files", zap.String("name", name), zap.String("dir", dir))
 
 	err := os.MkdirAll(dir, 0775)
 	if err != nil {
@@ -60,9 +60,11 @@ func BuildLocal(log *zap.Logger, root *config.Root, name string, distDir string)
 	listeners := []*listener.Listener{proxy.BuildListenerConfig(
 		"local",
 		service.Protocol,
-		config.Ingress,
-		root.Global.ExternalPort,
+		config.Receive,
+		root.Global.IngressPort,
+		[]string{"*"},
 		root.Global.LogDirectory,
+		-1,
 	)}
 
 	for _, otherService := range root.Services {
@@ -79,9 +81,11 @@ func BuildLocal(log *zap.Logger, root *config.Root, name string, distDir string)
 			listeners = append(listeners, proxy.BuildListenerConfig(
 				otherService.Name,
 				otherService.Protocol,
-				config.Egress,
+				config.Transmit,
 				otherService.LocalPort,
+				[]string{"localhost"},
 				root.Global.LogDirectory,
+				0,
 			))
 		}
 	}

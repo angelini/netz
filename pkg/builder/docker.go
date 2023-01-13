@@ -9,7 +9,7 @@ import (
 
 var (
 	dockerfileTemplate = template.Must(
-		template.ParseFiles("templates/dockerfile-local.tmpl"),
+		template.ParseFiles("templates/dockerfile.tmpl"),
 	)
 )
 
@@ -30,7 +30,7 @@ func writeDockerfile(name, dir string) error {
 
 	err = dockerfileTemplate.Execute(file, context)
 	if err != nil {
-		return fmt.Errorf("cannot generate Dockerfile template: %w", err)
+		return fmt.Errorf("cannot render Dockerfile template: %w", err)
 	}
 
 	return nil

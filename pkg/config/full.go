@@ -59,16 +59,16 @@ func parseProtocol(str string) (Protocol, error) {
 type FlowDirection int
 
 const (
-	Egress FlowDirection = iota
-	Ingress
+	Transmit FlowDirection = iota
+	Receive
 )
 
 func (f FlowDirection) String() string {
 	switch f {
-	case Egress:
-		return "egress"
-	case Ingress:
-		return "ingress"
+	case Transmit:
+		return "tx"
+	case Receive:
+		return "rx"
 	default:
 		return "unknown"
 	}
@@ -102,7 +102,7 @@ func parseHost(str string, protocol Protocol) (Host, error) {
 
 type Global struct {
 	LogDirectory      string
-	ExternalPort      uint32
+	IngressPort       uint32
 	ConnectionTimeout time.Duration
 	KeepaliveInterval time.Duration
 }
@@ -110,9 +110,9 @@ type Global struct {
 func globalFromHcl(config *HclGlobalConfig) (*Global, error) {
 	var err error
 
-	externalPort := uint32(8080)
-	if config.ExternalPort != 0 {
-		externalPort = uint32(config.ExternalPort)
+	ingressPort := uint32(8080)
+	if config.IngressPort != 0 {
+		ingressPort = uint32(config.IngressPort)
 	}
 
 	connectionTimeout := 1 * time.Second
@@ -133,10 +133,14 @@ func globalFromHcl(config *HclGlobalConfig) (*Global, error) {
 
 	return &Global{
 		LogDirectory:      config.LogDirectory,
-		ExternalPort:      externalPort,
+		IngressPort:       ingressPort,
 		ConnectionTimeout: connectionTimeout,
 		KeepaliveInterval: keepaliveInterval,
 	}, nil
+}
+
+type Ingress struct {
+	Domains []string
 }
 
 type Service struct {
@@ -144,6 +148,7 @@ type Service struct {
 	Protocol   Protocol
 	Host       Host
 	LocalPort  uint32
+	Ingresses  []Ingress
 	ServiceMap map[string]bool
 }
 
@@ -173,11 +178,22 @@ func serviceFromHcl(config *HclServiceConfig, root *HclRoot) (*Service, error) {
 		serviceMap[otherService.Name] = canConnect
 	}
 
+	var ingresses []Ingress
+
+	for _, ingress := range root.Ingresses {
+		if ingress.Name == config.Name {
+			ingresses = append(ingresses, Ingress{
+				Domains: ingress.Domains,
+			})
+		}
+	}
+
 	return &Service{
 		Name:       config.Name,
 		Protocol:   protocol,
 		Host:       host,
 		LocalPort:  uint32(config.LocalPort),
+		Ingresses:  ingresses,
 		ServiceMap: serviceMap,
 	}, nil
 }

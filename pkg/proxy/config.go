@@ -118,11 +118,15 @@ func stringMapToStruct(input map[string]string) *structpb.Struct {
 	}
 }
 
-func BuildListenerConfig(name string, protocol config.Protocol, direction config.FlowDirection, port uint32, logDir string) *listener.Listener {
+func BuildListenerConfig(name string, protocol config.Protocol, direction config.FlowDirection, port uint32, domains []string, logDir string, repeatCounter int) *listener.Listener {
 	routerConfig, _ := anypb.New(&router.Router{})
+	fullName := name
+	if repeatCounter != -1 {
+		fullName = fmt.Sprintf("%s-%d", name, repeatCounter)
+	}
 
 	accessLog := &filelog.FileAccessLog{
-		Path: filepath.Join(logDir, fmt.Sprintf("%s-%s.log", name, direction)),
+		Path: filepath.Join(logDir, fmt.Sprintf("%s-%s.log", fullName, direction)),
 		AccessLogFormat: &filelog.FileAccessLog_LogFormat{
 			LogFormat: &core.SubstitutionFormatString{
 				Format: &core.SubstitutionFormatString_JsonFormat{
@@ -151,7 +155,7 @@ func BuildListenerConfig(name string, protocol config.Protocol, direction config
 				Name: fmt.Sprintf("%s-route", name),
 				VirtualHosts: []*route.VirtualHost{{
 					Name:    fmt.Sprintf("%s-service", name),
-					Domains: []string{"*"},
+					Domains: domains,
 					Routes: []*route.Route{{
 						Match: &route.RouteMatch{
 							PathSpecifier: &route.RouteMatch_Prefix{
@@ -184,12 +188,12 @@ func BuildListenerConfig(name string, protocol config.Protocol, direction config
 	managerConfig, _ := anypb.New(manager)
 
 	address := "127.0.0.1"
-	if direction == config.Ingress {
+	if direction == config.Receive {
 		address = "0.0.0.0"
 	}
 
 	return &listener.Listener{
-		Name: fmt.Sprintf("%s-%s-listener", name, protocol),
+		Name: fmt.Sprintf("%s-%s-listener", fullName, protocol),
 		Address: &core.Address{
 			Address: &core.Address_SocketAddress{
 				SocketAddress: &core.SocketAddress{
