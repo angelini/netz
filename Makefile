@@ -1,4 +1,5 @@
 .PHONY: setup build
+.PHONY: generate build-all-images
 
 ENVOY_VERSION := 1.24.0
 
@@ -25,3 +26,12 @@ build: bin/netz bin/debug_server
 
 generate:
 	go run main.go generate all
+
+build-all-images:
+	scripts/build-all.sh
+
+run-front-proxy:
+	docker run --rm -p 127.0.0.1:80:8080/tcp --add-host host.docker.internal:host-gateway --add-host api.svc.local:host-gateway front-proxy:latest
+
+curl-front-proxy:
+	curl -i --connect-to api.example.com:80:localhost:80 api.example.com:80

@@ -14,6 +14,7 @@ import (
 	listener "github.com/envoyproxy/go-control-plane/envoy/config/listener/v3"
 	route "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
 	filelog "github.com/envoyproxy/go-control-plane/envoy/extensions/access_loggers/file/v3"
+	streamlog "github.com/envoyproxy/go-control-plane/envoy/extensions/access_loggers/stream/v3"
 	router "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/router/v3"
 	hcm "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/network/http_connection_manager/v3"
 	httpup "github.com/envoyproxy/go-control-plane/envoy/extensions/upstreams/http/v3"
@@ -125,7 +126,7 @@ func BuildListenerConfig(name string, protocol config.Protocol, direction config
 		fullName = fmt.Sprintf("%s-%d", name, repeatCounter)
 	}
 
-	accessLog := &filelog.FileAccessLog{
+	accessFileLog := &filelog.FileAccessLog{
 		Path: filepath.Join(logDir, fmt.Sprintf("%s-%s.log", fullName, direction)),
 		AccessLogFormat: &filelog.FileAccessLog_LogFormat{
 			LogFormat: &core.SubstitutionFormatString{
@@ -145,7 +146,22 @@ func BuildListenerConfig(name string, protocol config.Protocol, direction config
 		},
 	}
 
-	accessLogConfig, _ := anypb.New(accessLog)
+	accessStdoutLog := &streamlog.StdoutAccessLog{
+		AccessLogFormat: &streamlog.StdoutAccessLog_LogFormat{
+			LogFormat: &core.SubstitutionFormatString{
+				Format: &core.SubstitutionFormatString_TextFormatSource{
+					TextFormatSource: &core.DataSource{
+						Specifier: &core.DataSource_InlineString{
+							InlineString: "[%START_TIME%][%PROTOCOL%] %REQ(:METHOD)%:%REQ(:path)% status=%RESPONSE_CODE%,duration=%DURATION%\n",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	accessFileLogConfig, _ := anypb.New(accessFileLog)
+	accessStdoutLogConfig, _ := anypb.New(accessStdoutLog)
 
 	manager := &hcm.HttpConnectionManager{
 		CodecType:  hcm.HttpConnectionManager_AUTO,
@@ -180,7 +196,12 @@ func BuildListenerConfig(name string, protocol config.Protocol, direction config
 		AccessLog: []*accesslog.AccessLog{{
 			Name: wellknown.FileAccessLog,
 			ConfigType: &accesslog.AccessLog_TypedConfig{
-				TypedConfig: accessLogConfig,
+				TypedConfig: accessFileLogConfig,
+			},
+		}, {
+			Name: wellknown.FileAccessLog,
+			ConfigType: &accesslog.AccessLog_TypedConfig{
+				TypedConfig: accessStdoutLogConfig,
 			},
 		}},
 	}

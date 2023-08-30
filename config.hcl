@@ -6,19 +6,19 @@ global {
 
 service "http" "api" {
   address             = "api.svc.local"
-  local_port          = 4000
+  local_port          = 5000
   connecting_services = []
 }
 
 service "http" "logger" {
   address            = "logger.svc.local"
-  local_port         = 4001
+  local_port         = 5001
   allow_all_services = true
 }
 
 service "http" "db" {
   address    = "db.svc.external"
-  local_port = 4002
+  local_port = 5002
   connecting_services = [
     "api"
   ]
