@@ -26,12 +26,7 @@ service "http" "db" {
 
 ingress "api" {
   domains = [
-    "api.example.com"
-  ]
-}
-
-ingress "api" {
-  domains = [
-    "other.example.com"
+    "api.example.com",
+    "other.example.com",
   ]
 }

@@ -30,7 +30,7 @@ func NewCmdRoot() *cobra.Command {
 		},
 	}
 
-	cmd.AddCommand(NewCmdBuild())
+	cmd.AddCommand(NewCmdGenerate())
 
 	return cmd
 }

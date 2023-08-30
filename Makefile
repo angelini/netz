@@ -17,4 +17,11 @@ bin/netz: $(CMD_GO_FILES) $(PKG_GO_FILES)
 	go mod tidy
 	go build -o $@ main.go
 
-build: bin/netz
+bin/debug_server: debug_server/main.go
+	@mkdir -p bin
+	go build -o $@ $<
+
+build: bin/netz bin/debug_server
+
+generate:
+	go run main.go generate all

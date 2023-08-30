@@ -7,13 +7,13 @@ import (
 	"go.uber.org/zap"
 )
 
-func NewCmdBuild() *cobra.Command {
+func NewCmdGenerate() *cobra.Command {
 	var (
 		configPath string
 	)
 
 	cmd := &cobra.Command{
-		Use:   "build [all | <name>]",
+		Use:   "generate [all | <name>]",
 		Short: "Generate all build inputs",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
