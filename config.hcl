@@ -16,9 +16,8 @@ service "http" "logger" {
   allow_all_services = true
 }
 
-service "http" "db" {
-  address    = "db.svc.external"
-  local_port = 5002
+egress "http" "db" {
+  address    = "db.external"
   connecting_services = [
     "api"
   ]
