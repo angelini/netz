@@ -52,6 +52,7 @@ func BuildLocal(log *zap.Logger, root *config.Root, name string, distDir string)
 		"local",
 		config.Host{Address: "127.0.0.1", Port: service.LocalPort},
 		proxy.ClusterOptions{
+			HttpVersion:       1,
 			ConnectionTimeout: root.Global.ConnectionTimeout,
 			KeepaliveInterval: root.Global.KeepaliveInterval,
 		},
@@ -73,6 +74,7 @@ func BuildLocal(log *zap.Logger, root *config.Root, name string, distDir string)
 				otherService.Name,
 				otherService.Host,
 				proxy.ClusterOptions{
+					HttpVersion:       2,
 					ConnectionTimeout: root.Global.ConnectionTimeout,
 					KeepaliveInterval: root.Global.KeepaliveInterval,
 				},

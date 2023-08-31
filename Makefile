@@ -1,5 +1,6 @@
 .PHONY: setup build
-.PHONY: generate build-all-images build-debug-server
+.PHONY: generate build-debug-server build-all-images
+.PHONY: curl-front-proxy
 .PHONY: k3d-create
 .PHONY: k8s-clean k8s-deploy
 
@@ -38,11 +39,8 @@ generate:
 build-all-images: build-debug-server
 	scripts/build-all.sh
 
-run-front-proxy:
-	docker run --rm -p 127.0.0.1:80:8080/tcp --add-host host.docker.internal:host-gateway --add-host api.svc.local:host-gateway front-proxy:latest
-
 curl-front-proxy:
-	curl -i --connect-to api.example.com:80:localhost:80 api.example.com:80
+	curl -i --connect-to api.example.com:80:localhost:$(INGRESS_PORT) api.example.com:80
 
 k3d-create:
 	k3d registry create $(REGISTRY).localhost --port $(REIGSTRY_PORT)
@@ -51,7 +49,10 @@ k3d-create:
 k8s-clean:
 	kubectl delete ing --ignore-not-found ingress
 	kubectl delete deployment --ignore-not-found api
+	kubectl delete deployment --ignore-not-found front-proxy
 	kubectl delete service --ignore-not-found api-svc
+	kubectl delete service --ignore-not-found front-proxy-svc
 
 k8s-deploy:
 	kubectl apply -f k8s/api.yaml
+	kubectl apply -f k8s/front-proxy.yaml

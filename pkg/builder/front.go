@@ -31,6 +31,7 @@ func BuildFront(log *zap.Logger, root *config.Root, distDir string) error {
 				service.Name,
 				service.Host,
 				proxy.ClusterOptions{
+					HttpVersion:       2,
 					ConnectionTimeout: root.Global.ConnectionTimeout,
 					KeepaliveInterval: root.Global.KeepaliveInterval,
 				},

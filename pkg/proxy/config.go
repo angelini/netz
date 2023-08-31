@@ -41,6 +41,7 @@ func BuildBootstrapConfig(options BootstrapOptions) *bootstrap.Bootstrap {
 }
 
 type ClusterOptions struct {
+	HttpVersion       int8
 	ConnectionTimeout time.Duration
 	KeepaliveInterval time.Duration
 }
@@ -75,7 +76,10 @@ func BuildClusterConfig(name string, host config.Host, options ClusterOptions) *
 		CommonHttpProtocolOptions: &core.HttpProtocolOptions{
 			IdleTimeout: durationpb.New(60 * time.Second),
 		},
-		UpstreamProtocolOptions: &httpup.HttpProtocolOptions_ExplicitHttpConfig_{
+	}
+
+	if options.HttpVersion == 2 {
+		protocolOptions.UpstreamProtocolOptions = &httpup.HttpProtocolOptions_ExplicitHttpConfig_{
 			ExplicitHttpConfig: &httpup.HttpProtocolOptions_ExplicitHttpConfig{
 				ProtocolConfig: &httpup.HttpProtocolOptions_ExplicitHttpConfig_Http2ProtocolOptions{
 					Http2ProtocolOptions: &core.Http2ProtocolOptions{
@@ -87,7 +91,15 @@ func BuildClusterConfig(name string, host config.Host, options ClusterOptions) *
 					},
 				},
 			},
-		},
+		}
+	} else {
+		protocolOptions.UpstreamProtocolOptions = &httpup.HttpProtocolOptions_ExplicitHttpConfig_{
+			ExplicitHttpConfig: &httpup.HttpProtocolOptions_ExplicitHttpConfig{
+				ProtocolConfig: &httpup.HttpProtocolOptions_ExplicitHttpConfig_HttpProtocolOptions{
+					HttpProtocolOptions: &core.Http1ProtocolOptions{},
+				},
+			},
+		}
 	}
 
 	protocolOptionsConfig, _ := anypb.New(protocolOptions)

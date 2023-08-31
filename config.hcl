@@ -5,13 +5,13 @@ global {
 }
 
 service "http" "api" {
-  address             = "api.svc.local"
+  address             = "api-svc.default.svc"
   local_port          = 5000
   connecting_services = []
 }
 
 service "http" "logger" {
-  address            = "logger.svc.local"
+  address            = "logger-svc.default.svc"
   local_port         = 5001
   allow_all_services = true
 }
