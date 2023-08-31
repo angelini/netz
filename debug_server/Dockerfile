@@ -6,7 +6,8 @@ USER main
 
 WORKDIR /home/main
 
-COPY *.go ./
+COPY go.mod .
+COPY *.go .
 
 RUN mkdir -p ./bin && \
     CGO_ENABLED=0 GOOS=linux go build -o bin/server

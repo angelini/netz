@@ -104,7 +104,8 @@ func (c *controller) healthz(w http.ResponseWriter, req *http.Request) {
 	if h := atomic.LoadInt64(&c.healthy); h == 0 {
 		w.WriteHeader(http.StatusServiceUnavailable)
 	} else {
-		fmt.Fprintf(w, "uptime: %s\n", time.Since(time.Unix(0, h)))
+		hostname, _ := os.Hostname()
+		fmt.Fprintf(w, "uptime:   %s\nhostname: %s\n", time.Since(time.Unix(0, h)), hostname)
 	}
 }
 

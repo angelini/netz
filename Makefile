@@ -1,5 +1,13 @@
 .PHONY: setup build
-.PHONY: generate build-all-images
+.PHONY: generate build-all-images build-debug-server
+.PHONY: k3d-create
+.PHONY: k8s-clean k8s-deploy
+
+CLUSTER := netz
+INGRESS_PORT := 8001
+
+REGISTRY := netzregistry
+REIGSTRY_PORT := 3001
 
 ENVOY_VERSION := 1.24.0
 
@@ -27,7 +35,7 @@ build: bin/netz bin/debug_server
 generate:
 	go run main.go generate all
 
-build-all-images:
+build-all-images: build-debug-server
 	scripts/build-all.sh
 
 run-front-proxy:
@@ -35,3 +43,15 @@ run-front-proxy:
 
 curl-front-proxy:
 	curl -i --connect-to api.example.com:80:localhost:80 api.example.com:80
+
+k3d-create:
+	k3d registry create $(REGISTRY).localhost --port $(REIGSTRY_PORT)
+	k3d cluster create $(CLUSTER) -p "$(INGRESS_PORT):80@loadbalancer" --registry-use k3d-$(REGISTRY).localhost:$(REIGSTRY_PORT)
+
+k8s-clean:
+	kubectl delete ing --ignore-not-found ingress
+	kubectl delete deployment --ignore-not-found api
+	kubectl delete service --ignore-not-found api-svc
+
+k8s-deploy:
+	kubectl apply -f k8s/api.yaml
