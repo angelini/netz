@@ -1,0 +1,14 @@
+FROM --platform=linux/amd64 debian:bookworm
+
+RUN apt-get update && \
+    apt-get install -y curl && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN useradd -ms /bin/bash main
+
+USER main
+
+WORKDIR /home/main
+
+RUN curl -fSL -o envoy https://github.com/envoyproxy/envoy/releases/download/v1.24.1/envoy-1.24.1-linux-x86_64 && \
+    chmod +x ./envoy

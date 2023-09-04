@@ -4,6 +4,14 @@ set -euo pipefail
 
 REGISTRY="k3d-netzregistry.localhost:3001"
 
+build_base_image() {
+    (
+        cd "./base"
+        docker build -t "${REGISTRY}/base:latest" .
+        docker push "${REGISTRY}/base:latest"
+    )
+}
+
 build_dist_image() {
     local dir="${1}"
 
@@ -25,17 +33,21 @@ build_debug_server() {
 main() {
     build_debug_server
 
-    cd "./dist"
+    (
+        cd "./dist"
 
-    for dir in *; do
-        echo ""
-        echo "-------------------------------"
-        echo "| building ${dir}"
-        echo "-------------------------------"
-        echo ""
+        build_base_image
 
-        build_dist_image "${dir}"
-    done
+        for dir in *; do
+            echo ""
+            echo "-------------------------------"
+            echo "| building ${dir}"
+            echo "-------------------------------"
+            echo ""
+
+            build_dist_image "${dir}"
+        done
+    )
 }
 
 main "$@"

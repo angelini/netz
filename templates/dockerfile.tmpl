@@ -1,17 +1,4 @@
-FROM --platform=linux/amd64 debian:bookworm AS builder
-
-RUN apt-get update && \
-    apt-get install -y curl && \
-    rm -rf /var/lib/apt/lists/*
-
-RUN useradd -ms /bin/bash main
-
-USER main
-
-WORKDIR /home/main
-
-RUN curl -fSL -o envoy https://github.com/envoyproxy/envoy/releases/download/v1.24.1/envoy-1.24.1-linux-x86_64 && \
-    chmod +x ./envoy
+FROM --platform=linux/amd64 k3d-netzregistry.localhost:3001/base AS builder
 
 COPY envoy.config.json envoy.config.json
 
@@ -20,23 +7,11 @@ RUN mkdir logs && \
 
 # ------
 
-FROM --platform=linux/amd64 debian:bookworm
+FROM --platform=linux/amd64 k3d-netzregistry.localhost:3001/base
 
 ENV NETZ_SERVICE={{.Name}}
 
-RUN apt-get update && \
-    apt-get install -y curl dnsutils && \
-    rm -rf /var/lib/apt/lists/*
-
-RUN useradd -ms /bin/bash main
-
-USER main
-
-WORKDIR /home/main
-
 RUN mkdir logs
-
-COPY --from=builder /home/main/envoy envoy
 
 COPY --from=builder /home/main/envoy.config.json envoy.config.json
 

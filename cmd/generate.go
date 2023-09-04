@@ -27,6 +27,11 @@ func NewCmdGenerate() *cobra.Command {
 
 			distDir := "dist"
 
+			err = builder.BuildBase(log, distDir)
+			if err != nil {
+				return err
+			}
+
 			if args[0] == "all" {
 				err = builder.BuildAllLocal(log, root, distDir)
 			} else {
